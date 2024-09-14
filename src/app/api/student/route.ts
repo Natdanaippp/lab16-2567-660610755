@@ -3,6 +3,7 @@ import {
   zStudentGetParam,
   zStudentPostBody,
   zStudentPutBody,
+  zStudentDeleteBody
 } from "@lib/schema";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -28,6 +29,9 @@ export const GET = async (request: NextRequest) => {
   let filtered = DB.students;
   if (program !== null) {
     filtered = filtered.filter((std) => std.program === program);
+  }
+  if (studentId !== null) {
+    filtered = filtered.filter((std) => std.studentId === studentId);
   }
 
   //filter by student id here
@@ -97,19 +101,43 @@ export const PUT = async (request: NextRequest) => {
 };
 
 export const DELETE = async (request: NextRequest) => {
+  const body = await request.json();
+  const parseResult = zStudentDeleteBody.safeParse(body); 
+  if (parseResult.success === false) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Student ID must contain 9 characters`,
+      },
+      { status: 400 }
+    );
+  }
   //get body and validate it
-
+  const { studentId } = body;
   //check if student id exist
-
+  const studentIndex = DB.students.findIndex((std) => std.studentId === studentId);
+  if (studentIndex === -1) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Student ID ${studentId} does not exist`,
+      },
+      { status: 404 }
+    );
+  }
+  DB.students.splice(studentIndex, 1);
+    return NextResponse.json(
+      {
+        ok: true,
+        message: `Student ID ${studentId} has been deleted`,
+      },
+      { status: 200 }
+    );
+  
   //perform removing student from DB. You can choose from 2 choices
   //1. use array filter method
-  // DB.students = DB.students.filter(...);
+
 
   //or 2. use splice array method
   // DB.students.splice(...)
-
-  return NextResponse.json({
-    ok: true,
-    message: `Student Id xxx has been deleted`,
-  });
 };
